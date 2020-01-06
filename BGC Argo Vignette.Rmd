@@ -1,0 +1,175 @@
+---
+title: "BGCArgoData"
+author: "Jaimie Harbin"
+date: "December 20, 2019"
+output: html_document
+---
+
+#Biogeochemical Argo Data#
+
+The biogeochemical (BGC)- Argo program is similar to the Argo program.BGC Argos, however, measure an additional 6 parameters : oxygen, pH, nitrate, downwelling light, chrolophyll fluoresence, and optical backscattering.[1] 
+
+The purpose of the addition of these sensors was to closely monitor the ocean's biogeochemistry and health, more specifically, major processes such as ocean deoxygenation, acidification, and warming. [2]
+
+# BGC Argo Data Platforms#
+1) ArgoVis App
+2) Fleet monitor
+
+##1) Argovis App
+
+Argovis is an interactive tool to access BGC argo profiles. It allows for the visualization of temperature, salinity, and BGC data by location, and provides a trajectory forecast of BGC Argo floats.
+
+### Accessing the Data ###
+
+**Step One**: Go to the website argovis.colorado.edu
+
+**Step Two**: Select "Show only BGC" under "Display Options" on the left hand side
+
+**Step Three**: Select the BGC Argo of intrest and click 'To profile page'
+
+**Step Four**: Click ' Link to profile data on Argo GDAC'. This will download a netCDF file for the BGC Argo float.
+
+
+###Uploading the data to R###
+To upload the data, use the following code:
+
+```
+install.packages('oce')
+library('oce')
+read.argo('C:/Users/harbinj/Downloads/MR6901751_165 (1).nc') #Where in this case, 'MR6901751_165 (1).nc' is the name of the netCDF file downloaded from the Argo GDAC.
+```
+
+###Plotting Single Profiles###
+
+As described in the 'oce' vignette [3], although it is possible to view data within 'oce' objects using the 'slot' and 'list' notation (eg.`d@data$salinity`yields the salinity within an oce object named d), the best way to analyze the data is to use the`[[` notation, which derives from the generic "Extract" method for accessing parts of an object [2].
+
+For our Argovis example to plot the oxygen profile:
+
+```{r, warning=FALSE, message= FALSE, error= FALSE}
+install.packages('oce', repos = "http://cran.us.r-project.org")
+library('oce')
+BGCArgo<- read.argo('C:/Users/harbinj/Downloads/MR6901751_165 (1).nc')
+BGCPressure<- BGCArgo[['pressure']][,1]
+BGCOxygen<- BGCArgo[['oxygen']][,1]
+plot(BGCOxygen, BGCPressure, ylim=rev(range(BGCPressure)), type="l", xlab='Oxygen [DOXY]', ylab='Pressure [dbar]')
+
+```
+
+**Exercise One**: Use the Argovis app to download data from the  Southern Ocean and compare the oxygen concentration to the example of the Labrador Sea
+
+###Accessing Bulk Data###
+
+**Step One**: Go to the website argovis.colorado.edu
+
+**Step Two**: Select "Show only BGC" under "Display Options" on the left hand side
+
+**Step Three**: Click the hexagon icon (beneath the plus and minus sign) and select your area of intrest
+
+**Step Four**: Click 'To selection page' and then 'Export table to csv'.
+
+
+###Plotting Bulk Data###
+``` {r, warning=FALSE, message= FALSE, error= FALSE}
+install.packages('ocedata', repos = "http://cran.us.r-project.org")# To access coastlineWorldFine
+library('ocedata')
+data("coastlineWorldFine", package='ocedata')
+file<- read.csv(file='C:/Users/harbinj/Downloads/selection_table (4).csv', stringsAsFactors = FALSE) # The stringsAsFactors command gets rid of the levels
+attributes(file) # To determine which variables are within the file
+BulkLat<- unlist(lapply(file[['Lat']], function(x) parseLatLon(x))) #the lapply() runs through the data to call the parseLatLon function on each item to make the coordinates a numerical value
+BulkLon<- unlist(lapply(file[['Lon']], function(x) parseLatLon(x)))
+BulkLatLim<- c(40,70)
+BulkLonLim<- c(-30,-60)
+mapPlot(coastlineWorldFine, col='lightgray', longitudelim=BulkLonLim, latitudelim=BulkLatLim, projection="+proj=merc", grid=FALSE)
+mapPoints(BulkLon, BulkLat, col='red')
+```
+
+
+**Exercise Two**: Use the Argovis app to plot the latitude and longitude of a group of BGC argos in the Southern Ocean
+
+##2) Fleet Monitor##
+The fleet monitoring website allows for the visualization of Argo profiling float metadata, ocean measurements, trajectories, and technical parameters [4].
+
+###Accessing the data###
+
+**Step One**: Go to the website https://fleetmonitoring.euro-argo.eu/dashboard
+
+**Step Two**: Select "BGC" on the left panel under 'Network'
+
+**Step Three**: Select the parameters of intrest in the left panel (ie. Canada and Atlantic Ocean)
+
+**Step Four**: Click on the float of intrest
+
+**Step Five**: Click 'in Netcdf' under 'Stations data' on the right to download a netCDF of the BGC argo float
+
+###Uploading the data to R###
+
+```
+install.packages('oce')
+library('oce')
+read.argo('C:/Users/harbinj/Downloads/4902481_20200102164733222.nc') #Where in this case, '4902481_20200102164733222.nc' is the name of the netCDF file downloaded from the Argo GDAC.
+```
+###Plotting Single Profiles###
+
+```{r, warning=FALSE, message= FALSE, error= FALSE}
+install.packages('oce', repos = "http://cran.us.r-project.org")
+library('oce')
+FleetMonitoring<- read.argo('C:/Users/harbinj/Downloads/4902481_20200102164733222.nc')
+FMPressure<- FleetMonitoring[['pressure']][,1]
+FMOxygen<- FleetMonitoring[['oxygen']][,1]
+plot(FMOxygen, FMPressure, ylim=rev(range(FMPressure, na.rm=TRUE)), type="l", xlab='Oxygen [DOXY]', ylab='Pressure [dbar]')
+
+```
+
+**Exercise Three:** Use the Fleet Monitoring website to download data and plot a oxygen concentration profile from the Southern Ocean.
+
+# *Manipulating BGC Argo Data*
+
+To learn how to analyze changes in argo data through a color palette, to view specific depths both by exact data points, and interpolation plots, and to change between argo, CTD, and section plots, view the argo vignette at 
+
+
+
+##Answers##  
+1. **Exercise One**: Use the Argovis app to download data from the  Southern Ocean and compare the oxygen concentration to the example of the Labrador Sea
+
+```
+install.packages('oce')
+library('oce')
+BGCSouthArgo<- read.argo('C:/Users/harbinj/Downloads/MR5905375_069.nc')
+BGCSouthPressure<- BGCSouthArgo[['pressure']][,2]
+BGCSouthOxygen<- BGCSouthArgo[['oxygen']][,2]
+plot(BGCSouthOxygen, BGCSouthPressure, ylim=rev(range(BGCSouthPressure, na.rm=TRUE)), type="l", xlab='Oxygen [DOXY]', ylab='Pressure [dbar]')
+
+```
+2. **Exercise Two**: Use the Argovis app to plot the latitude and longitude of a group of BGC argos in the Southern Ocean
+
+```
+install.packages('ocedata')
+library('ocedata')
+data("coastlineWorldFine", package='ocedata')
+AnswerFile<- read.csv(file='C:/Users/harbinj/Downloads/selection_table (5).csv', stringsAsFactors=FALSE)
+attributes(AnswerFile)
+AnswerLat<- unlist(lapply(AnswerFile[['Lat']], function(x) parseLatLon(x)))
+AnswerLon<- unlist(lapply(AnswerFile[['Lon']], function(x) parseLatLon(x)))
+AnswerLatLim<- c(-70,-40)
+AnswerLonLim<- c(60,150)
+mapPlot(coastlineWorldFine, col='lightgray', longitudelim=AnswerLonLim, latitudelim=AnswerLatLim, projection="+proj=merc", grid=FALSE)
+mapPoints(AnswerLon, AnswerLat, col='red')
+```
+
+3. **Exercise Three**: Use the Fleet Monitoring website to download data and plot a oxygen concentration profile from the Southern Ocean.
+
+```
+install.packages('oce')
+library('oce')
+FMExercise<- read.argo('C:/Users/harbinj/Downloads/5905380_20200102141530188.nc')
+FMExercisePressure<- FMExercise[['pressure']][,2]
+FMExerciseOxygen<- FMExercise[['oxygen']][,2]
+plot(FMExerciseOxygen, FMExercisePressure, ylim=rev(range(FMExercisePressure, na.rm=TRUE)), type="l", xlab='Oxygen [DOXY]', ylab='Pressure [dbar]')
+
+```
+
+##References##
+1. Bittig, H. C., Maurer, T. L., Plant, J. N., Wong, A. P., Schmechtig, C., Claustre, H., ... & Organelli, E. (2019). A BGC-Argo guide: Planning, deployment, data handling and usage. Frontiers in Marine Science, 6, 502.
+2. https://argovis.colorado.edu/ng/home?mapProj=WM&presRange=%5B0,2000%5D&selectionStartDate=2019-12-06&selectionEndDate=2019-12-20&threeDayEndDate=2019-12-18&shapes=%5B%5D&includeRealtime=true&onlyBGC=false&onlyDeep=false&threeDayToggle=true
+3. https://cran.r-project.org/web/packages/oce/vignettes/oce.html
+4. https://fleetmonitoring.euro-argo.eu/float/1901079
